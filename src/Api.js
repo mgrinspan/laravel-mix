@@ -7,7 +7,7 @@ class Api {
      *
      * @param {Boolean} generateForProduction
      * @param {string}  devType
-     * @param {string}  prodType
+     * @param {string}  productionType
      */
     sourceMaps(
         generateForProduction = true,
@@ -91,6 +91,18 @@ class Api {
      */
     then(callback) {
         Mix.listen('build', callback);
+
+        return this;
+    }
+
+    /**
+     * Register an event listen for when the webpack
+     * config object has been fully generated.
+     *
+     * @param {Function} callback
+     */
+    override(callback) {
+        Mix.listen('configReadyForUser', callback);
 
         return this;
     }

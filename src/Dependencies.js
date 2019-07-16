@@ -1,7 +1,7 @@
 let childProcess = require('child_process');
-let File = require('./File');
 let Log = require('./Log');
 let argv = require('yargs').argv;
+let collect = require('collect.js');
 
 class Dependencies {
     /**
@@ -17,9 +17,10 @@ class Dependencies {
      * Install all dependencies that aren't available.
      *
      * @param {Boolean} abortOnComplete
+     * @param {Boolean} forceNpm
      */
-    install(abortOnComplete = false) {
-        this.dependencies
+    install(abortOnComplete = false, forceNpm = false) {
+        collect(this.dependencies)
             .reject(dependency => {
                 try {
                     return require.resolve(
@@ -27,10 +28,10 @@ class Dependencies {
                     );
                 } catch (e) {}
             })
-            .tap(dependencies => {
+            .pipe(dependencies => {
                 this.execute(
-                    this.buildInstallCommand(dependencies),
-                    dependencies,
+                    this.buildInstallCommand(dependencies.all(), forceNpm),
+                    dependencies.all(),
                     abortOnComplete
                 );
             });
@@ -52,24 +53,28 @@ class Dependencies {
         childProcess.execSync(command);
 
         Log.feedback(
-            'Okay, done. The following packages have been installed and saved to your package.json dependencies list:\n'
+            'Okay, done. The following packages have been installed and saved to your package.json dependencies list:'
         );
 
-        dependencies.forEach(d => Log.info('- ' + d));
+        dependencies.forEach(d => Log.feedback('- ' + d));
 
         this.respond(abortOnComplete);
     }
-
     /**
      * Build the dependency install command.
      *
-     * @param {Object} dependencies
+     * @param {Object}  dependencies
+     * @param {Boolean} forceNpm
      */
-    buildInstallCommand(dependencies) {
+    buildInstallCommand(dependencies, forceNpm = false) {
         dependencies = [].concat(dependencies).join(' ');
 
-        if (File.exists('yarn.lock')) {
-            return `yarn add ${dependencies} --dev --production=false`;
+        if (!forceNpm) {
+            try {
+                childProcess.execSync('command -v yarn >/dev/null');
+
+                return `yarn add ${dependencies} --dev --production=false`;
+            } catch (e) {}
         }
 
         return `npm install ${dependencies} --save-dev --production=false`;

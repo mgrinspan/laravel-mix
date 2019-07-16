@@ -18,7 +18,7 @@ class Log {
      * @param  {String} color
      */
     static feedback(message, color = 'green') {
-        Log.line(message, color);
+        Log.line('\t' + message, color);
     }
 
     /**
@@ -38,7 +38,7 @@ class Log {
      * @param  {String} color
      */
     static line(message, color = 'default') {
-        Log.info('\n' + message, color);
+        Log.info(message, color);
     }
 
     /**
